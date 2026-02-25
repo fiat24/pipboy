@@ -1579,7 +1579,7 @@ export default function PipBoyTerminal() {
             role="button"
             tabIndex={0}
             title="Power: cycle CRT profile"
-            onClick={cycleFxMode}
+            onClick={() => cycleFxMode()}
             onKeyDown={(e) => onHardwareActivate(e, cycleFxMode)}
           />
           <div className="screw4" /><div className="screw5" />
