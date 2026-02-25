@@ -321,7 +321,9 @@ export default function PipBoyTerminal() {
     setMessages(p => [...p, am]);
     const t0 = performance.now();
     try {
-      const cm = [...messages, um].map(m => ({ role: m.role, content: m.content }));
+      const cm = [...messages, um]
+        .filter(m => m.content.trim().length > 0)
+        .map(m => ({ role: m.role, content: m.content }));
       const r = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: cm, model: selectedModel }) });
       if (!r.ok) {
         const raw = await r.text().catch(() => '');
@@ -359,6 +361,7 @@ export default function PipBoyTerminal() {
           }
         }
       }
+      if (!full.trim()) throw new Error('Model returned an empty response.');
       const dur = (performance.now() - t0) / 1000;
       setMessages(p => { const u = [...p]; const l = u[u.length - 1]; if (l.role === 'assistant') l.duration = dur; return u });
       setLineCounter(p => p + full.split('\n').length + 2);

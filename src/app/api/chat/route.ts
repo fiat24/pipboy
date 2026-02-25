@@ -32,6 +32,10 @@ function pickString(...values: unknown[]) {
   return '';
 }
 
+function isChatRole(value: unknown): value is 'user' | 'assistant' | 'system' {
+  return value === 'user' || value === 'assistant' || value === 'system';
+}
+
 function resolveChatEndpoint(apiUrl: string) {
   const trimmed = apiUrl.trim().replace(/\/+$/, '');
   if (/\/chat\/completions$/i.test(trimmed)) return trimmed;
@@ -96,15 +100,22 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => null) as { messages?: unknown; model?: unknown } | null;
 
     const inputMessages = Array.isArray(body?.messages)
-      ? body.messages.filter(
-        (item): item is { role: 'user' | 'assistant' | 'system'; content: string } =>
-          !!item &&
-          typeof item === 'object' &&
-          'role' in item &&
-          'content' in item &&
-          typeof item.role === 'string' &&
-          typeof item.content === 'string'
-      )
+      ? body.messages
+        .filter(
+          (item): item is { role: unknown; content: unknown } =>
+            !!item &&
+            typeof item === 'object' &&
+            'role' in item &&
+            'content' in item
+        )
+        .map((item) => ({
+          role: typeof item.role === 'string' ? item.role.trim() : '',
+          content: typeof item.content === 'string' ? item.content.trim() : '',
+        }))
+        .filter(
+          (item): item is { role: 'user' | 'assistant' | 'system'; content: string } =>
+            isChatRole(item.role) && item.content.length > 0
+        )
       : [];
 
     const selectedModel = typeof body?.model === 'string' ? body.model.trim() : '';
