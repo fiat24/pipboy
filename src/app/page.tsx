@@ -125,8 +125,8 @@ export default function PipBoyTerminal() {
   const [startTime] = useState(new Date());
   const [clock, setClock] = useState(fTime());
 
-  const [mainTab, setMainTab] = useState<'stat' | 'inv' | 'data' | 'map' | 'radio'>('data');
-  const [subTab, setSubTab] = useState<string>('terminal');
+  const [mainTab, setMainTab] = useState<'stat' | 'inv' | 'data' | 'map' | 'radio'>('stat');
+  const [subTab, setSubTab] = useState<string>('status');
   const [invCat, setInvCat] = useState('Weapons');
   const [selectedSpecial, setSelectedSpecial] = useState('Strength');
   const [selectedPerkIdx, setSelectedPerkIdx] = useState(0);
@@ -648,6 +648,7 @@ export default function PipBoyTerminal() {
   const trackProgress = Math.min(100, (songElapsed / trackDuration) * 100);
   const signalProfile = activeStation.signal >= 75 ? 'CLEAR' : activeStation.signal >= 50 ? 'FADED' : 'NOISY';
   const statTabs: Array<'status' | 'special' | 'perks'> = ['status', 'special', 'perks'];
+  const dataTabs: Array<'terminal' | 'logs' | 'settings'> = ['terminal', 'logs', 'settings'];
   const perks = [
     { name: 'RIFLEMAN', rank: 3, desc: 'Non-automatic rifles now hit harder and ignore a portion of armor.' },
     { name: 'GUN NUT', rank: 2, desc: 'Advanced weapon mods can be crafted at workbenches.' },
@@ -779,6 +780,43 @@ export default function PipBoyTerminal() {
       return;
     }
     cycleMainTab(1, 'dial');
+  };
+  const handleLeftKnob = () => {
+    if (mainTab === 'stat') {
+      const cur = statTabs.indexOf(subTab as (typeof statTabs)[number]);
+      const idx = (Math.max(cur, 0) - 1 + statTabs.length) % statTabs.length;
+      setSubTab(statTabs[idx]);
+      playUiSfx('dial');
+      return;
+    }
+
+    if (mainTab === 'inv') {
+      const invKeys = invCategoryTabs.map(tab => tab.key);
+      const cur = invKeys.indexOf(invCat as (typeof invKeys)[number]);
+      const idx = (Math.max(cur, 0) - 1 + invKeys.length) % invKeys.length;
+      setInvCat(invKeys[idx]);
+      playUiSfx('dial');
+      return;
+    }
+
+    if (mainTab === 'data') {
+      const cur = dataTabs.indexOf(subTab as (typeof dataTabs)[number]);
+      const idx = (Math.max(cur, 0) - 1 + dataTabs.length) % dataTabs.length;
+      setSubTab(dataTabs[idx]);
+      playUiSfx('dial');
+      return;
+    }
+
+    if (mainTab === 'radio') {
+      cycleTrack(-1, 'dial');
+      return;
+    }
+
+    // MAP mode: left knob recenters local map instead of duplicating target cycling.
+    setMapOffset({ x: 0, y: 0 });
+    setPlayerHeading(0);
+    pushScanLog('MAP CENTERED BY KNOB');
+    playUiSfx('ok');
   };
   const handleTuneWheel = () => {
     if (mainTab !== 'radio') {
@@ -1039,6 +1077,14 @@ export default function PipBoyTerminal() {
 
   return (
     <div className={`pip-wrapper ${photoShellMode ? 'photo-shell-mode' : ''}`}>
+      <a
+        className="page-blog-link"
+        href="https://qqwx.de"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Blog
+      </a>
       <div ref={pipRef} className={`pip wear-${wearMode}`}>
         {/* Grime overlay */}
         <div className="casing-grime" />
@@ -1686,15 +1732,15 @@ export default function PipBoyTerminal() {
                 className="photo-hotspot photo-hotspot-left-knob hardware-control"
                 role="button"
                 tabIndex={0}
-                title="Left knob: previous tab/target/station"
-                onClick={handleLeftWheel}
-                onKeyDown={(e) => onHardwareActivate(e, handleLeftWheel)}
+                title="Left knob: previous sub-item / track / map reset"
+                onClick={handleLeftKnob}
+                onKeyDown={(e) => onHardwareActivate(e, handleLeftKnob)}
               />
               <div
-                className="photo-hotspot photo-hotspot-right-wheel hardware-control"
+                className="photo-hotspot photo-hotspot-side-gear hardware-control"
                 role="button"
                 tabIndex={0}
-                title="Right wheel: next tab/target/station"
+                title="Side gear: next tab/target/station"
                 onClick={handleRightWheel}
                 onKeyDown={(e) => onHardwareActivate(e, handleRightWheel)}
               />
