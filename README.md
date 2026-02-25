@@ -21,7 +21,7 @@ npm run dev
 
 ## 环境变量
 
-请在本地或 Vercel 中配置以下变量（不要提交到仓库）：
+请在本地或 Vercel 中配置以下变量
 
 ```bash
 API_URL=https://114514.1919810.com/v1
