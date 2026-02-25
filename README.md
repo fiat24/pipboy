@@ -31,10 +31,15 @@ API_KEY=sk-1145141919810
 
 本地可放在 `.env.local`
 
+说明：
+- `API_URL` 建议填 API 根地址（例如 `https://xxx.com/v1`），不要重复拼接路径。
+- 也支持直接填到 `.../chat/completions`，后端会自动兼容。
+- `API_KEY` 必须是服务端可用的真实密钥，前端不会直接读取。
+
 ## Vercel 部署
 
 1. 将仓库导入 Vercel。
-2. 在 Project Settings -> Environment Variables 中添加上面的 3 个变量。
+2. 在 Project Settings -> Environment Variables 中添加上面的 3 个变量，并勾选你实际使用的环境（至少 Production，建议 Preview 也配置）。
 3. 触发部署即可。
 
 ## 常用命令

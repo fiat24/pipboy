@@ -323,7 +323,22 @@ export default function PipBoyTerminal() {
     try {
       const cm = [...messages, um].map(m => ({ role: m.role, content: m.content }));
       const r = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: cm, model: selectedModel }) });
-      if (!r.ok) throw new Error('fail');
+      if (!r.ok) {
+        const raw = await r.text().catch(() => '');
+        if (raw) {
+          let detail = '';
+          try {
+            const parsed = JSON.parse(raw) as { error?: unknown; message?: unknown };
+            const nested = parsed.error && typeof parsed.error === 'object' ? (parsed.error as { message?: unknown }).message : undefined;
+            const hit = [parsed.error, parsed.message, nested].find(v => typeof v === 'string' && v.trim());
+            if (typeof hit === 'string') detail = hit;
+          } catch {
+            // fall through to raw response text
+          }
+          throw new Error(detail || raw);
+        }
+        throw new Error(`Request failed with status ${r.status}`);
+      }
       const rd = r.body?.getReader(); const dc = new TextDecoder();
       if (!rd) throw new Error('no body');
       let full = '', buf = '';
@@ -334,14 +349,24 @@ export default function PipBoyTerminal() {
         for (const line of lines) {
           const t = line.trim();
           if (!t || t === 'data: [DONE]' || !t.startsWith('data: ')) continue;
-          try { const d = JSON.parse(t.slice(6)); if (d.content) { full += d.content; setMessages(p => { const u = [...p]; const l = u[u.length - 1]; if (l.role === 'assistant') l.content = full; return u }) } } catch { }
+          let d: { content?: string; error?: string } | null = null;
+          try { d = JSON.parse(t.slice(6)) as { content?: string; error?: string } } catch { d = null }
+          if (!d) continue;
+          if (d.error) throw new Error(d.error);
+          if (d.content) {
+            full += d.content;
+            setMessages(p => { const u = [...p]; const l = u[u.length - 1]; if (l.role === 'assistant') l.content = full; return u });
+          }
         }
       }
       const dur = (performance.now() - t0) / 1000;
       setMessages(p => { const u = [...p]; const l = u[u.length - 1]; if (l.role === 'assistant') l.duration = dur; return u });
       setLineCounter(p => p + full.split('\n').length + 2);
-    } catch {
-      setMessages(p => { const u = [...p]; const l = u[u.length - 1]; if (l.role === 'assistant') l.content = '[ERROR] Terminal malfunction.'; return u });
+    } catch (err) {
+      const raw = err instanceof Error ? err.message : 'Terminal malfunction.';
+      const compact = raw.replace(/\s+/g, ' ').trim();
+      const detail = compact.length > 280 ? `${compact.slice(0, 277)}...` : compact;
+      setMessages(p => { const u = [...p]; const l = u[u.length - 1]; if (l.role === 'assistant') l.content = `[ERROR] ${detail || 'Terminal malfunction.'}`; return u });
       setLineCounter(p => p + 2);
     } finally { setIsStreaming(false); setTimeout(() => inputRef.current?.focus(), 50); }
   }, [input, isStreaming, messages, selectedModel, playUiSfx]);

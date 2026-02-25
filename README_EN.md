@@ -29,10 +29,15 @@ API_KEY=your_api_key
 
 For local development, put them in `.env.local`.
 
+Notes:
+- `API_URL` should be your API base URL (for example `https://xxx.com/v1`).
+- A full `.../chat/completions` URL is also supported.
+- `API_KEY` is server-side only and must be valid in your deployment environment.
+
 ## Deploy on Vercel
 
 1. Import this repository in Vercel.
-2. Add the 3 environment variables in Project Settings -> Environment Variables.
+2. Add the 3 variables in Project Settings -> Environment Variables and enable the environments you use (at least Production, usually Preview too).
 3. Trigger deployment.
 
 ## Scripts
