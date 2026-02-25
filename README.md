@@ -2,6 +2,8 @@
 
 一个基于 Next.js 的 Pip-Boy 终端风格网页项目，包含多标签界面、地图、音频和照片外壳模式。
 
+English version: [README_EN.md](./README_EN.md)
+
 ## 运行效果
 
 ![Pipboy Screenshot](https://roim-picx-9nr.pages.dev/rest/5dGd4Ek.png)
