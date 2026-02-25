@@ -25,9 +25,16 @@ const sseHeaders = {
   Connection: 'keep-alive',
 };
 
-function pickString(...values: unknown[]) {
+function pickTrimmedString(...values: unknown[]) {
   for (const value of values) {
     if (typeof value === 'string' && value.trim()) return value.trim();
+  }
+  return '';
+}
+
+function pickRawString(...values: unknown[]) {
+  for (const value of values) {
+    if (typeof value === 'string') return value;
   }
   return '';
 }
@@ -46,7 +53,7 @@ function extractChoiceContent(payload: unknown) {
   if (!payload || typeof payload !== 'object') return '';
   const withChoices = payload as { choices?: unknown; output_text?: unknown };
 
-  if (typeof withChoices.output_text === 'string' && withChoices.output_text.trim()) {
+  if (typeof withChoices.output_text === 'string') {
     return withChoices.output_text;
   }
 
@@ -55,7 +62,7 @@ function extractChoiceContent(payload: unknown) {
   }
 
   const first = withChoices.choices[0] as OpenAIChoice;
-  return pickString(first.delta?.content, first.message?.content, first.text);
+  return pickRawString(first.delta?.content, first.message?.content, first.text);
 }
 
 async function readUpstreamError(response: Response) {
@@ -70,7 +77,7 @@ async function readUpstreamError(response: Response) {
       payload.error && typeof payload.error === 'object'
         ? (payload.error as { message?: unknown }).message
         : undefined;
-    const detail = pickString(payload.error, payload.message, nestedMessage);
+    const detail = pickTrimmedString(payload.error, payload.message, nestedMessage);
     if (detail) return detail;
   } catch {
     // not JSON, use plain text below
